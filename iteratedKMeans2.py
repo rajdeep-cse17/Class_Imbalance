@@ -7,16 +7,21 @@ from sklearn.cluster import KMeans
 from sklearn.svm import SVC
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import classification_report
+from imblearn.over_sampling import SMOTE
+import pickle
 
-dataset = 'yeast6'
-num_features = 8
+
+dataset = 'poker-8-9_vs_5'
+num_features = 9
 minority_class_label = 1
 majority_class_label = 0
-max_iter = 35
-num_clusters=30
+max_iter = 10
+num_clusters= 40
 
 df = pd.read_csv('./data/'+dataset+'_train.csv')
-
+df.astype({'class': 'int32'})
 
 def get_class_samples(label):
 	df_class = df.loc[df['class']==label]
@@ -47,23 +52,45 @@ def create_train_set(X_maj, X_min, maj_label, min_label):
 
 	X = X_min.append(X_maj, ignore_index=True, sort=True)
 
-	return X.drop(columns='class'), X['class']
+	y = X['class']
+	X.drop(columns='class', inplace = True)
+
+	sm = SMOTE(random_state=42)
+	X_res, y_res = sm.fit_resample(X, y)
+
+	return X_res, y_res
 
 def train(X, y, maj_num, min_num):
-	clf = SVC(gamma='auto',kernel='linear',probability=True, class_weight='balanced')#RandomForestClassifier(n_estimators=100, max_depth=2, class_weight='balanced')SVC(gamma='auto',kernel='linear',probability=True)
-	clf.fit(X, y)
 
+
+	#clf = SVC(gamma='auto',kernel='linear',probability=True, class_weight='balanced')#RandomForestClassifier(n_estimators=100, max_depth=2, class_weight='balanced')SVC(gamma='auto',kernel='linear',probability=True)
+	clf =  MLPClassifier(hidden_layer_sizes=(30,50,100,100,70,50,20,10,8 ))
+	clf.fit(X, y)
 	
+	y_pred = clf.predict(X)
+
 	#print('\n')
-	print('train_set : '+str(clf.score(X,y)))	
+	#print('train_set : '+str(clf.score(X, y)))
+	#print('train_set_classwise : '+str(precision_recall_fscore_support(y, y_pred)))
+	#print('train_set_avg : '+str(precision_recall_fscore_support(y, y_pred, average='macro')))	
+
+	print('\n')
+
+	print('train_set')
+	print(classification_report(y,y_pred))
+
+	print('\n')
 
 	X_global = df.drop(columns='class')
 	y_global = df['class']
 	y_global_pred = clf.predict(X_global)
 
-	print('global_train_set : '+str(clf.score(X_global, y_global)))
-	print('global_train_set_classwise : '+str(precision_recall_fscore_support(y_global, y_global_pred)))
-	print('global_train_set_avg : '+str(precision_recall_fscore_support(y_global, y_global_pred, average='weighted')))
+	#print('global_train_set : '+str(clf.score(X_global, y_global)))
+	#print('global_train_set_classwise : '+str(precision_recall_fscore_support(y_global, y_global_pred)))
+	#print('global_train_set_avg : '+str(precision_recall_fscore_support(y_global, y_global_pred, average='macro')))
+
+	print('global_train_set')
+	print(classification_report(y_global, y_global_pred))
 
 	#print('\n')
 	
@@ -88,8 +115,15 @@ def update_cluster_centers(df_maj, cluster_centers, clf):
 				point_coord = np.array(df_maj.iloc[j,:-2])
 				entropy = df_maj.iloc[j]['entropy']
 				
-				w_num += point_coord*entropy
-				w_denom += df_maj.iloc[j]['entropy']	
+				if( clf.predict([point_coord]) == [majority_class_label]):
+					
+					w_num += 1.5 * point_coord*entropy
+					w_denom += 1.5 * entropy
+				
+				else:
+					
+					w_num += point_coord*entropy
+					w_denom += entropy	
 
 		cluster_centers[curr_cluster] = w_num/w_denom #[num/w_denom for num in w_num]
 
@@ -98,14 +132,18 @@ def update_cluster_centers(df_maj, cluster_centers, clf):
 def test(clf):
 
 	df = pd.read_csv('./data/'+dataset+'_test.csv')
+	df.astype({'class': 'int32'})
 
 	X_global = df.drop(columns='class')
 	y_global = df['class']
 	y_global_pred = clf.predict(X_global)
 
-	print('test_set : '+str(clf.score(X_global, y_global)))
-	print('test_set_classwise : '+str(precision_recall_fscore_support(y_global, y_global_pred)))
-	print('test_set_avg : '+str(precision_recall_fscore_support(y_global, y_global_pred, average='weighted')))
+	#print('test_set : '+str(clf.score(X_global, y_global)))
+	#print('test_set_classwise : '+str(precision_recall_fscore_support(y_global, y_global_pred)))
+	#print('test_set_avg : '+str(precision_recall_fscore_support(y_global, y_global_pred, average='macro')))
+
+	print('test set')
+	print(classification_report(y_global, y_global_pred))
 
 
 def main():
@@ -126,5 +164,8 @@ def main():
 	print('\n.....................Testing...............')
 	
 	test(clf)	
+
+	f = open('model.sav','wb')
+	pickle.dump(clf,f)
 
 main()

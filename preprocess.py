@@ -4,10 +4,10 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-dataset = 'yeast6'
-num_features = 8
+dataset = 'poker-8-9_vs_5'
+num_features = 10
 
-df = pd.read_csv(dataset+'.csv',sep=', ')
+df = pd.read_csv('./data/'+dataset+'.csv',sep=',')
 print(df.head)
 
 print('\n')
@@ -17,10 +17,13 @@ print('\n')
 le = preprocessing.LabelEncoder()
 df['class'] = le.fit_transform(df['class']) 
 
+le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
+print(le_name_mapping)
+
 print(df.groupby('class').count())
 print('\n')
 
-df_train, df_test = train_test_split(df, train_size = 0.7, stratify = df['class'])
+df_train, df_test = train_test_split(df, train_size = 0.6, stratify = df['class'])
 
 scaler = MinMaxScaler()
 df_train = scaler.fit_transform(df_train)
@@ -39,5 +42,5 @@ print('\n')
 print(df_test.head)
 print('\n')
 
-df_train.to_csv(dataset+'_train.csv', index=False)
-df_test.to_csv(dataset+'_test.csv', index=False)
+df_train.to_csv('./data/'+dataset+'_train.csv', index=False)
+df_test.to_csv('./data/'+dataset+'_test.csv', index=False)
