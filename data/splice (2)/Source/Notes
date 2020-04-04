@@ -1,0 +1,11 @@
+Operations to get into Delve format
+-----------------------------------
+
+1) Remove attribute 2 (name)
+2) Replace , with white space  remove instances with low instance encodings
+(D, N, S or R)
+
+The script splt in this directory was used to massage the original splice.data
+into the form for Dataset.data
+
+3) Randomly re-order the data

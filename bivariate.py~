@@ -1,0 +1,26 @@
+import numpy as np 
+import pandas as pd 
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+dataset = 'SPECTF'
+num_features = 10
+
+df = pd.read_csv('./data/'+dataset+'.csv',sep=',')
+
+
+minority=[0]
+
+print(df.loc[df['class']==1].shape)
+
+for i in range(df.shape[0]):
+	if df['class'][i] in minority:
+		df['class'][i]=1
+	else:
+		df['class'][i]=0
+df.to_csv('./data/'+dataset+'.csv', index=False)
+
+
+'''segmentation-one auc is zero
+splice,spambase,spctfheart'''
