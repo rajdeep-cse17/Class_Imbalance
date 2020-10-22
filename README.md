@@ -2,7 +2,7 @@
 
 Code to solve class imbalance problem using an iterative approach. 
 
-Datasets: Some datasets are chosen from the UCI, Keel and LIBSVM repositories. They are preprocessed using preprocess.py and kept in data folder.
+Datasets: Some datasets are chosen from the UCI, Keel and LIBSVM repositories. They are preprocessed using [preprocess.py](preprocess.py) and kept in data folder.
 
 [topn.py](topn.py): Code for our method.
 
